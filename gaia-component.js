@@ -156,8 +156,10 @@ var base = {
      * @param {String} value
      */
     setAttr: function(name, value) {
-      var internal = this.shadowRoot.firstElementChild;
-      setAttribute.call(internal, name, value);
+      if (this.shadowRoot) {
+        var internal = this.shadowRoot.firstElementChild;
+        setAttribute.call(internal, name, value);
+      }
       setAttribute.call(this, name, value);
     },
 
