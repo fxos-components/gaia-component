@@ -11,71 +11,50 @@ var setAttribute = Element.prototype.setAttribute;
 var noop  = function() {};
 
 /**
- * Register a new component.
- *
- * @param  {String} name
- * @param  {Object} props
- * @return {constructor}
+ * Generic gaia-component error
+ * @param {String} msg error message
+ */
+var GaiaComponentError = function(msg) {
+  Error.call(this, msg);
+  this.name = 'GaiaComponentError';
+  this.message = msg;
+  this.status = 'gaia component error';
+};
+GaiaComponentError.prototype = Object.create(Error.prototype);
+
+/**
+ * gaia-component error when it is not accessible
+ * @param {String} msg error message
+ */
+var GaiaComponentNotAccessibleError = function(msg) {
+  GaiaComponentError.call(this, msg);
+  this.name = 'GaiaComponentNotAccessibleError';
+  this.status = 'gaia component not accessible';
+};
+GaiaComponentNotAccessibleError.prototype = Object.create(
+  GaiaComponentError.prototype);
+
+/**
+ * gaia-component error when it is not localized
+ * @param {String} msg error message
+ */
+var GaiaComponentNotLocalizedError = function(msg) {
+  GaiaComponentError.call(this, msg);
+  this.name = 'GaiaComponentNotLocalizedError';
+  this.status = 'gaia component not localized';
+};
+GaiaComponentNotLocalizedError.prototype = Object.create(
+  GaiaComponentError.prototype);
+
+/**
+ * Common component errors
+ * @type {Object}
  * @public
  */
-exports.register = function(name, props) {
-  var baseProto = getBaseProto(props.extends);
-  var template = props.template || baseProto.templateString;
-
-  // Components are extensible by default but can be declared
-  // as non extensible as an optimization to avoid
-  // storing the template strings
-  var extensible = props.extensible = props.hasOwnProperty('extensible')?
-    props.extensible : true;
-
-  // Clean up
-  delete props.extends;
-
-  // Pull out CSS that needs to be in the light-dom
-  if (template) {
-    // Stores the string to be reprocessed when
-    // a new component extends this one
-    if (extensible && props.template) {
-      props.templateString = props.template;
-    }
-
-    var output = processCss(template, name);
-
-    props.template = document.createElement('template');
-    props.template.innerHTML = output.template;
-    props.lightCss = output.lightCss;
-
-    props.globalCss = props.globalCss || '';
-    props.globalCss += output.globalCss;
-  }
-
-  // Inject global CSS into the document,
-  // and delete as no longer needed
-  injectGlobalCss(props.globalCss);
-  delete props.globalCss;
-
-  // Merge base getter/setter attributes with the user's,
-  // then define the property descriptors on the prototype.
-  var descriptors = mixin(props.attrs || {}, base.descriptors);
-
-  // Store the orginal descriptors somewhere
-  // a little more private and delete the original
-  props._attrs = props.attrs;
-  delete props.attrs;
-
-  // Create the prototype, extended from base and
-  // define the descriptors directly on the prototype
-  var proto = createProto(baseProto, props);
-  Object.defineProperties(proto, descriptors);
-
-  // Register the custom-element and return the constructor
-  try {
-    return document.registerElement(name, { prototype: proto });
-  } catch (e) {
-    if (e.name !== 'NotSupportedError') {
-      throw e;
-    }
-  }
+exports.errors = {
+  GaiaComponentError: GaiaComponentError,
+  GaiaComponentNotAccessibleError: GaiaComponentNotAccessibleError,
+  GaiaComponentNotLocalizedError: GaiaComponentNotLocalizedError
 };
 
 var base = {
@@ -196,6 +175,74 @@ var base = {
       },
 
       get: innerHTML.get
+    }
+  }
+};
+
+/**
+ * Register a new component.
+ *
+ * @param  {String} name
+ * @param  {Object} props
+ * @return {constructor}
+ * @public
+ */
+exports.register = function(name, props) {
+  var baseProto = getBaseProto(props.extends);
+  var template = props.template || baseProto.templateString;
+
+  // Components are extensible by default but can be declared
+  // as non extensible as an optimization to avoid
+  // storing the template strings
+  var extensible = props.extensible = props.hasOwnProperty('extensible')?
+    props.extensible : true;
+
+  // Clean up
+  delete props.extends;
+
+  // Pull out CSS that needs to be in the light-dom
+  if (template) {
+    // Stores the string to be reprocessed when
+    // a new component extends this one
+    if (extensible && props.template) {
+      props.templateString = props.template;
+    }
+
+    var output = processCss(template, name);
+
+    props.template = document.createElement('template');
+    props.template.innerHTML = output.template;
+    props.lightCss = output.lightCss;
+
+    props.globalCss = props.globalCss || '';
+    props.globalCss += output.globalCss;
+  }
+
+  // Inject global CSS into the document,
+  // and delete as no longer needed
+  injectGlobalCss(props.globalCss);
+  delete props.globalCss;
+
+  // Merge base getter/setter attributes with the user's,
+  // then define the property descriptors on the prototype.
+  var descriptors = mixin(props.attrs || {}, base.descriptors);
+
+  // Store the orginal descriptors somewhere
+  // a little more private and delete the original
+  props._attrs = props.attrs;
+  delete props.attrs;
+
+  // Create the prototype, extended from base and
+  // define the descriptors directly on the prototype
+  var proto = createProto(baseProto, props);
+  Object.defineProperties(proto, descriptors);
+
+  // Register the custom-element and return the constructor
+  try {
+    return document.registerElement(name, { prototype: proto });
+  } catch (e) {
+    if (e.name !== 'NotSupportedError') {
+      throw e;
     }
   }
 };
