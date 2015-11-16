@@ -1,7 +1,8 @@
-/*global sinon, assert, suite, setup, teardown, test */
-suite('gaia-component', function() {
-  'use strict';
+/*global sinon, assert, suite, setup, teardown, test, HTMLTemplateElement */
 
+'use strict';
+
+suite('gaia-component', function() {
   var component = window['gaia-component'];
 
   setup(function() {
@@ -269,6 +270,34 @@ suite('gaia-component', function() {
 
       El();
       document.dir = 'rtl';
+    });
+  });
+
+  suite('errors', function() {
+    var msg = 'test';
+
+    test('gaia component error', function() {
+      assert.ok(component.errors.GaiaComponentError);
+      assert.throws(function() {
+        throw new component.errors.GaiaComponentError(msg);
+      }, component.errors.GaiaComponentError, msg,
+        'gaia component error can be thrown');
+    });
+
+    test('gaia component not accessible', function() {
+      assert.ok(component.errors.GaiaComponentNotAccessibleError);
+      assert.throws(function() {
+        throw new component.errors.GaiaComponentNotAccessibleError(msg);
+      }, component.errors.GaiaComponentNotAccessibleError, msg,
+        'gaia component not accessible can be thrown');
+    });
+
+    test('gaia component not localized', function() {
+      assert.ok(component.errors.GaiaComponentNotLocalizedError);
+      assert.throws(function() {
+        throw new component.errors.GaiaComponentNotLocalizedError(msg);
+      }, component.errors.GaiaComponentNotLocalizedError, msg,
+        'gaia component not localized can be thrown');
     });
   });
 
